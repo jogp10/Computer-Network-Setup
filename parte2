@@ -1,0 +1,166 @@
+Parte 2
+
+	reset ethernet configuration
+
+systemctl restart networking
+	// apaga qualquer configuração da placa de rede
+
+	reset switch configuration
+	
+/system reset-configuration
+	// comando começado com / é do switch, caso contrário do computador
+	// reset no switch
+
+
+GTK Term
+Baudrate: 115200 bauds
+
+TUX2 -> 172.16
+TUX3 -> 172.16.Y0.0/24
+TUX4 -> 172.16.Y1.0/24
+
+nº de interfaces, nº de cabos de rede
+
+
+exp1 - só ligamos maquinas a um switch e mandamos ping
+
+
+exp2 - configurar uma bridge
+
+	dois bridges numa switch
+	2 maquinas ligadas, ligadas a uma bridge
+	1 maquina ligada a uma bridge
+	bridges nao têm conexão
+
+configurar uma maquina
+	- desligar todos os cabos
+	- ligar tuxY3 e tuxY4 e tuxY2 ao switch - na máquina E0
+	
+	- configurar máquinas
+	configurar maquina 3
+		ifconfig eth0 172.16.XY.1/24
+		ifconfig eth0 172.16.**1**0.1netmask255.255.255.0
+		ambos os comandos são iguais
+		X número da banca
+		Y número da rede
+		netmask é um & lógico. dá o ip da rede e o número da maquina que poso ligar
+		
+	configurar maquina 4
+		ifconfig eth0 172.16.10.254/24
+		ifconfig eth0 172.16.10.254netmask255.255.255.0
+		
+	configurar maquina 2
+		ifconfig eth0 172.16.11.1/24	
+		ifconfig eth0 172.16.11.1netmask255.255.255.0
+		
+	- configurar bridges
+	o que é uma bridge?
+		computer networking device that creates a single, aggregate network from multiple communication networks or netwok segments.
+		diferença com routing:
+		routing allows multiple networks to communicate independently and yet remain separate (segunda camada), whereas bridging connectos two separate networks as if they were single network.
+		
+	
+	- connect to the switch
+	
+	cabos
+	S0 -> RS232 ()
+	RS232->Console (cisco na bridge, consola no switch)
+	
+	
+	gtkterm@115200 baudrate
+	enter
+	user: admin
+	pass: blank
+	
+	- dar reset configuration
+		/system reset-configuration
+		y [ENTER]
+	
+	- create two bridges on the switch
+		
+		/interface bridge add name=bridgeY0
+		/interface bridge add name=bridgeY1
+		/interface bridge print
+	
+	- remover as maquinas da bridge default e ligá-los na correspondente (maquina 3 e 4 na 0, maquina 2 na 1)
+		1º PASSO
+		/interface bridge port remove [find interface=etherXX]
+			XX número de porta da configuração da máquina. cabo porta na switch
+			
+		verificacao -> /interface bridge port print (se ports não estiverem no bridge, corretamento retirado da bridge)
+		
+		2º PASSO
+		/interface bridge port add interface=etherXX bridge=bridgeYY
+			XX número de porta da configuração da máquina. cabo porta na switch
+			YY número com que foi registada a bridge (primeiro Y -> banca, segundo Y -> rede)
+
+		nova verificação
+		
+		fazer cada passo para as três máquinas
+	
+	- começar captura na máquina 3
+	começo o programa wireshark na interface eth0 na máquina 3
+	
+	- ping máquina 4 e 2 (devo ter ligação na 4. na 2 não deve haver ligação)
+		ping IP (172.16.XY.Z)
+		X número da banca
+		Y número da rede
+		Z número da máquina na rede a pingar
+		e.g. 172.16.60.254 (máquina 3 a pingar máquina 4, 6 banca onde foi feita esta aula)
+		repetir para máquina 2 num novo terminal
+		
+		guardar log file
+		
+	- parar captura
+	
+	-começar as capturas para todas as máquinas
+		ping broadcast é falar para toda a gente.
+		ping -b 172.16.XY.255
+		
+		- disable ICMP echo-ignore-broadcasts on tux13, tux14, tux12 de maneira a responder a ping broadcasts
+			ICMP protocolo dos pings
+			protocolo para verficar ligações entre dispositivos
+			echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+
+	ping broadcast máquina 3 -> recebe respostas da 4
+	máquina 4 recebe ping broadcast -> envia resposta para a 3
+	máquina 2 não recebeu nada
+
+	ping broadcast máquina 2 ping -b 172.16.X1.255
+	outras máquina da rede não recebem nada
+
+
+exp 3 - configurar um router no linux
+
+	tranformar máquina 4 num router
+		ligar eth1 (E1) e switch
+		configurar tuxY4.eth1 e adicioná-lo ao bridgeY1
+		
+			ifconfig eth1 172.16.X1.253/24
+				X número da banca
+				1 número da rede
+				253 número do dispositivo na rede
+			
+			remover da bridge default
+				/interface bridge port remove [find interface=etherXX]
+			add to bridgeY1
+				/interface bridge port add interface=etherXX bridge=bridge61
+				
+			verificar 
+				/interface bridge port print
+				
+	habilitar ip forwarding on tux14
+		echo 1 > /proc/sys/net/ipv4/ip_forward
+	disable ICMP echo-ignore-broadcasts 
+		echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+
+	
+	- reconfigurar  maquina 3 e 2 de forma a que ambas consigam conectar
+		adicionar portas de saida da rede
+		na maquina 3
+			route add default gw 172.16.10.254
+		na maquina 2
+			route add-net 172.16.10.0/24 gw 172.16.11.253f
+
+
