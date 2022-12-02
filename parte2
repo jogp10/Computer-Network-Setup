@@ -16,8 +16,8 @@ GTK Term
 Baudrate: 115200 bauds
 
 TUX2 -> 172.16
-TUX3 -> 172.16.Y0.0/24
-TUX4 -> 172.16.Y1.0/24
+TUX3 -> 172.16.X0.0/24
+TUX4 -> 172.16.X1.0/24
 
 nº de interfaces, nº de cabos de rede
 
@@ -34,24 +34,25 @@ exp2 - configurar uma bridge
 
 configurar uma maquina
 	- desligar todos os cabos
+	- correr systemctl restart networking ( dar reset configuração)
 	- ligar tuxY3 e tuxY4 e tuxY2 ao switch - na máquina E0
 	
 	- configurar máquinas
 	configurar maquina 3
-		ifconfig eth0 172.16.XY.1/24
-		ifconfig eth0 172.16.**1**0.1netmask255.255.255.0
+		ifconfig eth0 172.16.X0.1/24
+		ifconfig eth0 172.16.X0.1netmask255.255.255.0
 		ambos os comandos são iguais
 		X número da banca
 		Y número da rede
 		netmask é um & lógico. dá o ip da rede e o número da maquina que poso ligar
 		
 	configurar maquina 4
-		ifconfig eth0 172.16.10.254/24
-		ifconfig eth0 172.16.10.254netmask255.255.255.0
+		ifconfig eth0 172.16.X0.254/24
+		ifconfig eth0 172.16.X0.254netmask255.255.255.0
 		
 	configurar maquina 2
-		ifconfig eth0 172.16.11.1/24	
-		ifconfig eth0 172.16.11.1netmask255.255.255.0
+		ifconfig eth0 172.16.X1.1/24	
+		ifconfig eth0 172.16.X1.1netmask255.255.255.0
 		
 	- configurar bridges
 	o que é uma bridge?
@@ -159,8 +160,31 @@ exp 3 - configurar um router no linux
 	- reconfigurar  maquina 3 e 2 de forma a que ambas consigam conectar
 		adicionar portas de saida da rede
 		na maquina 3
-			route add default gw 172.16.10.254
+			route add default gw 172.16.X0.254
 		na maquina 2
+			route add default gw 172.16.X1.253
 			route add-net 172.16.10.0/24 gw 172.16.11.253f
 
+	abrir wireshark, selecionar eth0, na máquina 3
+	3 terminais, ping todos os ips a partir da máquina 3 ao mesmo tempo.
+	guardar log
 
+	máquina 4, duas instancias do wireshark uma por network interface (eth0 e eth1)
+	limpar arp tables nas 3 máquinas (arp -d ipaddress)
+	na máquina 3, dar ping na máquina 2 por alguns segundos
+	parar as capturas e guardar logs
+	
+experiencia 4 - configurar um router comercial e implementar NAT
+
+	o nosso router reencaminha um pacote que não é para ele e envia para a outra rede.
+
+	NAT - ver aula teórica (Network Address translation)
+	NAT - mapeamento de um ip numa rede privada ele põe o seu IP e manda para a internet
+		para que o router saiba que pacotes são para ele e que pacotes são para a outra rede, tem de ter uma tabela de encaminhamento.
+	RC - router cisco (mas vão usar router da microteck no lab)
+
+	traceroute - dar track aos pontos por onde passa o pacote
+
+	conectar routerboard rc1 (eth1) à red do netlab (PX.1)
+		X número da banca
+		
