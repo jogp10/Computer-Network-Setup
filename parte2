@@ -183,8 +183,35 @@ experiencia 4 - configurar um router comercial e implementar NAT
 		para que o router saiba que pacotes são para ele e que pacotes são para a outra rede, tem de ter uma tabela de encaminhamento.
 	RC - router cisco (mas vão usar router da microteck no lab)
 
+	switch trabalha diretamente com MAC address (endereço físico)
+	router trabalha com IP address (endereço lógico)
+
 	traceroute - dar track aos pontos por onde passa o pacote
 
-	conectar routerboard rc1 (eth1) à red do netlab (PX.1)
+	conectar routerboard rc1 (eth1) à rede do netlab (PX.1)
 		X número da banca
-		
+	desligar o cisco da console e ligá-lo ao Router MTIK
+
+	configurar ip do router
+		restart ao gtkterm
+		/system reset-configuration
+		/ip address add address=172.16.2.X9/24 interface=ether1
+
+	ligar eth2 a porta do switch
+	ligar cisco do Router MTIK à console e configurar porta (adicionar à bridge1)
+		/interface bridge port remove [find interface=etherXX]
+		/interface bridge port add interface=etherXX bridge=bridgeYY
+
+	voltar a desligar o cisco da console e ligá-lo ao Router MTIK
+	dar restart ao gtkterm
+	configurar address do eth2
+		/ip address add address=172.16.X1.254/24 interface=ether2
+
+	verificar se está tudo ok
+		/ip address print
+			router tem uma bridge default
+
+	adicionar routes ao router
+		/ip route add dst-address=0.0.0.0/0 gateway=172.16.2.254
+		/ip route add dst-address=172.16.10.0/24 gateway=172.16.11.253
+		/ip route print	
