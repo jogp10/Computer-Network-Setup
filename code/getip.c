@@ -6,7 +6,8 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include<arpa/inet.h>
+#include <arpa/inet.h>
+#include <string.h>
 
 int getIP(char *hostname, char *ip) {
     struct hostent *h;
