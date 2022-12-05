@@ -11,7 +11,8 @@
 
 #include <string.h>
 
-#define SERVER_PORT 6000
+#define MAX_MSG 100
+#define SERVER_PORT 21
 #define SERVER_ADDR "192.168.28.96"
 
 int main(int argc, char **argv) {
@@ -56,5 +57,3 @@ int main(int argc, char **argv) {
     }
     return 0;
 }
-
-
