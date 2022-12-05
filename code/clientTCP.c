@@ -38,7 +38,10 @@ int main(int argc, char **argv)
 
     char user[MAX_MSG], pass[MAX_MSG], host[MAX_MSG], file_path[MAX_MSG], file_name[MAX_MSG];
 
-    // parse url
+    // Parse url...
+    printf("Parsing URL...\n");
+
+    parseURL(argv[1], user, pass, host, file_path, file_name);
 
     char user_command[MAX_MSG] = "user ";
     strcat(user_command, user);
@@ -47,25 +50,34 @@ int main(int argc, char **argv)
     char file_command[MAX_MSG] = "retr ";
     strcat(file_command, file_path);
     char passive_command[MAX_MSG] = "pasv";
-
     char response[MAX_MSG];
 
+/*
+    printf("\nPrinting Commands...\n");
+    printf("user_command: %s\n", user_command);
+    printf("pass_command: %s\n", pass_command);
+    printf("file_command: %s\n", file_command);
+    printf("passive_command: %s\n", passive_command);
+    printf("file_name: %s\n", file_name);
+    printf("host: %s\n", host);*/
 
 
-
-    /*connect to the server*/
+    /*Connect to the server*/
     if (sockfd = connectToServer(server_addr, SERVER_PORT))
     {
         perror("connect()");
         exit(-1);
     }
 
+    return 0;
+
+
     /*send user command*/
     if(writeCommand(sockfd, user_command) != 0)
     {
         exit(-1);
     }
-    getResponse(sockfd, response);
+    readResponse(sockfd, response);
     checkResponse(response, 331);
 
 
@@ -74,7 +86,7 @@ int main(int argc, char **argv)
     {
         exit(-1);
     }
-    getResponse(sockfd, response);
+    readResponse(sockfd, response);
     checkResponse(response, 230);
 
 
@@ -83,7 +95,7 @@ int main(int argc, char **argv)
     {
         exit(-1);
     }
-    getResponse(sockfd, response);
+    readResponse(sockfd, response);
     checkResponse(response, 227);
     
 
@@ -132,18 +144,24 @@ int parseURL(char *url, char *user, char *pass, char *host, char *file_path, cha
 
     char *ftp = strtok(url, "/");      // ftp:
     char *urlrest = strtok(NULL, "/"); // [<user>:<password>@]<host>
-    char *file_path = strtok(NULL, "");     // <url-path>
-    char *file_name = strrchr(file_path, '/');
-    if (file_name != NULL)file_name = file_name + 1;
-    else file_name = file_path;
+    char *new_file_path = strtok(NULL, "");     // <url-path>
+    char *new_file_name = strrchr(file_path, '/');
+    if (new_file_name != NULL) new_file_name = new_file_name + 1;
+    else new_file_name = new_file_path;
 
     char *user_pass = strtok(urlrest, "@"); // [<user>:<password>]
-    char *host = strtok(NULL, "");          // <host>
-    host = host + 1; // remove the first character (the ])
+    char *new_host = strtok(NULL, "");          // <host>
+    new_host = new_host + 1; // remove the first character (the ])
 
-    char *user = strtok(user_pass, ":"); // <user>
-    user = user + 1;
-    char *pass = strtok(NULL, "");       // <password>
+    char *new_user = strtok(user_pass, ":"); // <user>
+    new_user = new_user + 1;
+    char *new_pass = strtok(NULL, "");       // <password>
+
+    strncpy(user, new_user, MAX_MSG);
+    strncpy(pass, new_pass, MAX_MSG);
+    strncpy(host, new_host, MAX_MSG);
+    strncpy(file_path, new_file_path, MAX_MSG);
+    strncpy(file_name, new_file_name, MAX_MSG);
     
     return 0;
 }
