@@ -8,8 +8,9 @@
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <unistd.h>
-
 #include <string.h>
+
+#include "getip.c"
 
 #define MAX_MSG 100
 #define SERVER_PORT 21
@@ -52,56 +53,48 @@ int main(int argc, char **argv)
     char passive_command[MAX_MSG] = "pasv";
     char response[MAX_MSG];
 
-/*
     printf("\nPrinting Commands...\n");
     printf("user_command: %s\n", user_command);
     printf("pass_command: %s\n", pass_command);
     printf("file_command: %s\n", file_command);
     printf("passive_command: %s\n", passive_command);
     printf("file_name: %s\n", file_name);
-    printf("host: %s\n", host);*/
-
+    printf("host: %s\n", host);
 
     /*Connect to the server*/
+    printf("\nConnecting to server...\n");
+
+    getIP(host, server_addr);
+
     if (sockfd = connectToServer(server_addr, SERVER_PORT))
     {
         perror("connect()");
         exit(-1);
     }
 
-    return 0;
-
-
     /*send user command*/
-    if(writeCommand(sockfd, user_command) != 0)
+    if (writeCommand(sockfd, user_command) != 0)
     {
         exit(-1);
     }
     readResponse(sockfd, response);
     checkResponse(response, 331);
 
-
-    /*send pass command*/	
-    if(writeCommand(sockfd, pass_command) != 0)
+    /*send pass command*/
+    if (writeCommand(sockfd, pass_command) != 0)
     {
         exit(-1);
     }
     readResponse(sockfd, response);
     checkResponse(response, 230);
 
-
     /*send passive command*/
-    if(writeCommand(sockfd, passive_command) != 0)
+    if (writeCommand(sockfd, passive_command) != 0)
     {
         exit(-1);
     }
     readResponse(sockfd, response);
     checkResponse(response, 227);
-    
-
-
-
-   
 
     if (close(sockfd) < 0)
     {
@@ -117,18 +110,24 @@ int connectToServer(char *serverAddr, int serverPort)
     struct sockaddr_in server_addr;
 
     /*server address handling*/
+    printf("Server address handling\n");
+    printf("Server address: %s\n", serverAddr);
     bzero((char *)&server_addr, sizeof(server_addr));
+    printf("Server address: %s\n", serverAddr);
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = inet_addr(serverAddr); /*32 bit Internet address network byte ordered*/
     server_addr.sin_port = htons(serverPort);            /*server TCP port must be network byte ordered */
 
     /*open a TCP socket*/
+    printf("Opening socket...\n");
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
         perror("socket()");
         exit(-1);
     }
+
     /*connect to the server*/
+    printf("Connecting to server...\n");
     if (connect(sockfd,
                 (struct sockaddr *)&server_addr,
                 sizeof(server_addr)) < 0)
@@ -136,33 +135,47 @@ int connectToServer(char *serverAddr, int serverPort)
         perror("connect()");
         exit(-1);
     }
+    printf("Connected to server!\n");
     return sockfd;
 }
 
 int parseURL(char *url, char *user, char *pass, char *host, char *file_path, char *file_name)
 {
 
-    char *ftp = strtok(url, "/");      // ftp:
-    char *urlrest = strtok(NULL, "/"); // [<user>:<password>@]<host>
-    char *new_file_path = strtok(NULL, "");     // <url-path>
+    char *ftp = strtok(url, "/");           // ftp:
+    char *urlrest = strtok(NULL, "/");      // [<user>:<password>@]<host>
+    char *new_file_path = strtok(NULL, ""); // <url-path>
     char *new_file_name = strrchr(file_path, '/');
-    if (new_file_name != NULL) new_file_name = new_file_name + 1;
-    else new_file_name = new_file_path;
+    if (new_file_name)
+        new_file_name = new_file_name + 1;
+    else
+        new_file_name = new_file_path;
 
     char *user_pass = strtok(urlrest, "@"); // [<user>:<password>]
-    char *new_host = strtok(NULL, "");          // <host>
-    new_host = new_host + 1; // remove the first character (the ])
+    char *new_host = strtok(NULL, "");      // <host>
 
-    char *new_user = strtok(user_pass, ":"); // <user>
-    new_user = new_user + 1;
-    char *new_pass = strtok(NULL, "");       // <password>
+    char *new_user;
+    char *new_pass;
+    if (new_host)
+    {
+        new_host = new_host + 1;           // remove the first character (the ])
+        new_user = strtok(user_pass, ":"); // <user>
+        new_user = new_user + 1;
+        new_pass = strtok(NULL, ""); // <password>
+    }
+    else
+    {
+        new_host = user_pass;
+        new_user = "anonymous";
+        new_pass = "pass";
+        printf("No user and password provided. Using default values.\n");
+    }
 
     strncpy(user, new_user, MAX_MSG);
     strncpy(pass, new_pass, MAX_MSG);
     strncpy(host, new_host, MAX_MSG);
     strncpy(file_path, new_file_path, MAX_MSG);
     strncpy(file_name, new_file_name, MAX_MSG);
-    
     return 0;
 }
 
@@ -191,7 +204,6 @@ int saveFile(char *path, char *fileName, int socket)
     return 0;
 }
 
-
 int writeCommand(int socket, char *command)
 {
     int sent = send(socket, command, strlen(command), 0);
@@ -200,7 +212,7 @@ int writeCommand(int socket, char *command)
         printf("Error writing command\n");
         return -1;
     }
-    if(sent == 0)
+    if (sent == 0)
     {
         perror("????");
         return 1;
@@ -208,7 +220,6 @@ int writeCommand(int socket, char *command)
     printf("Sent command\n");
     return 0;
 }
-
 
 int readResponse(int socket, char *response)
 {
@@ -223,9 +234,7 @@ int readResponse(int socket, char *response)
     return 0;
 }
 
-
 int checkResponse(char *response, int expected)
 {
-    //TODO
-
+    // TODO
 }
