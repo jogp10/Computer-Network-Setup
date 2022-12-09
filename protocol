@@ -1,0 +1,118 @@
+Setting up
+
+Desligar todos os cabos
+
+Reset ethernet configuration
+	systemctl restart networking
+
+S0 -> RS232
+RS232 -> console
+Reset switch configuration
+	/system reset-configuration
+	
+Ligar máquinas 2,3 e 4 ao switch no eth0
+
+Configurar máquina 3
+	ifconfig eth0 172.16.X0.1/24  ** X número da banca
+	ifconfig eth0 172.16.X0.1netmask255.255.255.0  ** ambos os comandos são iguais
+	
+Configurar máquina 4
+	ifconfig eth0 172.16.X0.254/24
+
+Configurar máquina 2
+	ifconfig eth0 172.16.X1.1/24
+
+Configurar uma bridge
+	Ligar dois cabos
+		RS232 -> Console
+		S0 -> RS232
+
+	GTKTERM@115200 baudrate
+		enter
+		user: admin
+		pass: <blank>
+		
+		- reset da configuração
+			/system reset-configuration
+			y [ENTER]
+			
+		- Criar duas bridges na switch
+			/interface bridge add name=bridgeX0
+			/interface bridge add name=bridgeX1
+			/interface bridge print
+			
+		- Remover máquinas da bridge default e ligá-las na bridge correspondente
+			/interface bridge port remove [find interface=etherYY]
+				** XX número da porta no switch
+			
+			/interface bridge port add interface=etherYY bridge=bridgeXY
+			
+			/interface bridge port print
+	- Desabilitar ICMP echo-ignore-broadcasts
+		echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+		
+Configurar um router
+	
+	Transformar máquina 4 num router
+		Ligar eth1 da máquina 4 no switch
+			ifconfig eth1 172.16.X1.253/24
+			/interface bridge port remove [find interface=etherYY]
+			/interface bridge port add interface=etherYY bridge=bridgeX1
+			
+		Habilitar ip forwarding na máquina 4
+			echo 1 > /proc/sys/net/ipv4/ip_forward
+			echo 0 > /proc/sys/net/ipv4/icmp_echo_ignore_broadcasts
+			
+	Reconfigurar máquinas 2 e 3 para que ambas consigam conectar
+		Na máquina 3
+			route add default gw 172.16.X0.254
+		Na máquina 2
+			route add default gw 172.16.X1.253
+			
+	- Switch trabalha diretamente com MAC address (endereço físico)
+	- Router trabalha com IP address (endereço lógico)
+	- Traceroute (dar track aos pontos por onde passa o pacote)
+	
+	Conectar routerboard rc1 (eth1) à rede do netlab (PX.1)
+	Desligar console e ligá-lo ao RouterMTIK
+	
+	Configurar ip do router
+		Restart ao gtkterm
+		/ip address add address=172.16.2.X9/24 interface=ether1
+		
+	Ligar eth2 à porta do switch
+	Ligar cisco do Router MTIK à console e configurar porta
+		/interface bridge port remove [find interface=etherXX]
+		/interface bridge port add interface=etherXX bridge=bridgeX1
+			
+	Voltar a desligar o cisco da console e ligá-lo ao Router MTIK
+	
+	Dar restart ao GTKTERM
+	
+	Configurar address do eth2
+		/ip address add address=172.16.X1.254/24 interface=ether2
+		/ip address print
+			router tem uma bridge default
+		
+	Na máquina 3 (adicionar máquina 4 como default router)
+		route add default gw 172.16.X0.254
+	Na máquina 2 e 4 (adicionar RC as default router)
+		route add default gw 172.16.X1.254
+			
+	Adicionar routes
+		na máquina 2
+			ip route add 172.16.X0.0/24 via 172.16.X1.253
+		no Router
+			/ip route add dst-address=0.0.0.0/0 gateway=172.16.2.254 (ONLY FOR LAB I320)
+			/ip route add dst-address=172.16.X0.0/24 gateway=172.16.X1.253
+			/ip route print
+	
+	Na máquina 3 ping a tudo
+		ping 172.16.X0.254
+		ping 172.16.X1.253
+		ping 172.16.X1.1
+		ping 172.16.X1.254
+		ping 172.16.2.X9
+		ping 8.8.8.8
+	
+		

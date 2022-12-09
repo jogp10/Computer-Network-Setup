@@ -96,6 +96,7 @@ int main(int argc, char **argv)
     readResponse(sockfd, response);
     checkResponse(response, 227);
 
+
     if (close(sockfd) < 0)
     {
         perror("close()");
