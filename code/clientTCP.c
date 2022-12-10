@@ -29,9 +29,9 @@ int checkResponse(char *response, int expected);
 
 int readWelcomeResponse(int socket, char *response);
 
-int getCodeResponse(int sockfd,char* response);
+int getCodeResponse(int sockfd, char *response);
 
-int sendCommand(int socketfd, char * command);
+int sendCommand(int socketfd, char *command);
 
 int main(int argc, char **argv)
 {
@@ -65,6 +65,7 @@ int main(int argc, char **argv)
     printf("file_command: %s\n", file_command);
     printf("passive_command: %s\n", passive_command);
     printf("file_name: %s\n", file_name);
+    printf("file_path: %s\n", file_path);
     printf("host: %s\n", host);
 
     /*Connect to the server*/
@@ -75,16 +76,14 @@ int main(int argc, char **argv)
     if (sockfd = connectToServer(server_addr, SERVER_PORT))
     {
         perror("connect()");
-        //exit(-1);
+        // exit(-1);
     }
 
     // Read welcome message
     printf("\nReading welcome message...\n");
     readWelcomeResponse(sockfd, response);
-    //checkResponse(response, 220);
+    // checkResponse(response, 220);
     printf("Welcome message received without errors!\n");
-
-    
 
     /*send user command*/
     printf("\n\nSending user command\n");
@@ -116,7 +115,6 @@ int main(int argc, char **argv)
     readResponse(sockfd, response);
     printf("Response: %s\n", response);
     checkResponse(response, 227);
-
 
     if (close(sockfd) < 0)
     {
@@ -165,13 +163,15 @@ int parseURL(char *url, char *user, char *pass, char *host, char *file_path, cha
 {
 
     char *ftp = strtok(url, "/");           // ftp:
-    char *urlrest = strtok(NULL, "/");      // [<user>:<password>@]<host>
+    char *urlrest = strtok(NULL, "/");      // <user>:<password>@<host>
     char *new_file_path = strtok(NULL, ""); // <url-path>
-    char *new_file_name = strrchr(file_path, '/');
+    char *new_file_name = strrchr(new_file_path, '/');
     if (new_file_name)
         new_file_name = new_file_name + 1;
     else
+    {
         new_file_name = new_file_path;
+    }
 
     char *user_pass = strtok(urlrest, "@"); // [<user>:<password>]
     char *new_host = strtok(NULL, "");      // <host>
@@ -180,10 +180,8 @@ int parseURL(char *url, char *user, char *pass, char *host, char *file_path, cha
     char *new_pass;
     if (new_host)
     {
-        new_host = new_host + 1;           // remove the first character (the ])
         new_user = strtok(user_pass, ":"); // <user>
-        new_user = new_user + 1;
-        new_pass = strtok(NULL, ""); // <password>
+        new_pass = strtok(NULL, "");       // <password>
     }
     else
     {
@@ -266,19 +264,18 @@ int checkResponse(char *response, int expected)
         return -1;
     }
     return 0;
-
-   
 }
 
-int readWelcomeResponse(int socket, char *response){
+int readWelcomeResponse(int socket, char *response)
+{
     int code;
 
-    char* welcomeResponse = (char*) malloc(100*sizeof(char));
+    char *welcomeResponse = (char *)malloc(100 * sizeof(char));
 
-    do{
-        
+    do
+    {
 
-        int bytes = recv(socket, welcomeResponse, MAX_MSG, 0);
+        int bytes = recv(socket, welcomeResponse, 1000, 0);
 
         if (bytes < 0)
         {
@@ -290,34 +287,32 @@ int readWelcomeResponse(int socket, char *response){
         printf("Response: %s\n", welcomeResponse);
         printf("Response code: %d\n", code);
 
-    }
-    while (welcomeResponse[3] != ' ');
+    } while (welcomeResponse[3] != ' ');
 
-    
-  
-
-    
     return 0;
 }
-int getCodeResponse(int sockfd,char* response){
-  int responseCode;
-  responseCode = (int) response[0]-'0';
-  
+int getCodeResponse(int sockfd, char *response)
+{
+    int responseCode;
+    responseCode = (int)response[0] - '0';
 
-  return responseCode;
+    return responseCode;
 }
 
-int sendCommand(int socketfd, char * command){
-  printf(" about to send command: \n> %s", command);
-  int sent = send(socketfd, command, strlen(command), 0);
-  if (sent == 0){
-    printf("sendCommand: Connection closed");
-    return 1;
-  }
-  if (sent == -1){
-    printf("sendCommand: error");
-    return 2;
-  }
-  printf("> command sent\n");
-  return 0;
+int sendCommand(int socketfd, char *command)
+{
+    printf(" about to send command: \n> %s", command);
+    int sent = send(socketfd, command, strlen(command), 0);
+    if (sent == 0)
+    {
+        printf("sendCommand: Connection closed");
+        return 1;
+    }
+    if (sent == -1)
+    {
+        printf("sendCommand: error");
+        return 2;
+    }
+    printf("> command sent\n");
+    return 0;
 }
