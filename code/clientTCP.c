@@ -27,6 +27,12 @@ int readResponse(int socket, char *response);
 
 int checkResponse(char *response, int expected);
 
+int readWelcomeResponse(int socket, char *response);
+
+int getCodeResponse(int sockfd,char* response);
+
+int sendCommand(int socketfd, char * command);
+
 int main(int argc, char **argv)
 {
 
@@ -69,15 +75,26 @@ int main(int argc, char **argv)
     if (sockfd = connectToServer(server_addr, SERVER_PORT))
     {
         perror("connect()");
-        exit(-1);
+        //exit(-1);
     }
 
+    // Read welcome message
+    printf("\nReading welcome message...\n");
+    readWelcomeResponse(sockfd, response);
+    //checkResponse(response, 220);
+    printf("Welcome message received without errors!\n");
+
+    
+
     /*send user command*/
+    printf("\n\nSending user command\n");
     if (writeCommand(sockfd, user_command) != 0)
     {
         exit(-1);
     }
+    printf("\n\nReceived response\n");
     readResponse(sockfd, response);
+    printf("Response: %s\n", response);
     checkResponse(response, 331);
 
     /*send pass command*/
@@ -85,7 +102,9 @@ int main(int argc, char **argv)
     {
         exit(-1);
     }
+    printf("\nSent pass command\n");
     readResponse(sockfd, response);
+    printf("Response: %s\n", response);
     checkResponse(response, 230);
 
     /*send passive command*/
@@ -93,7 +112,9 @@ int main(int argc, char **argv)
     {
         exit(-1);
     }
+    printf("\nSent passive command\n");
     readResponse(sockfd, response);
+    printf("Response: %s\n", response);
     checkResponse(response, 227);
 
 
@@ -218,24 +239,85 @@ int writeCommand(int socket, char *command)
         perror("????");
         return 1;
     }
-    printf("Sent command\n");
     return 0;
 }
 
 int readResponse(int socket, char *response)
 {
+    printf("Reading response...\n");
     int bytes = recv(socket, response, MAX_MSG, 0);
+    printf("Bytes: %d\n", bytes);
     if (bytes < 0)
     {
         printf("Error reading response\n");
         return -1;
     }
 
-    printf("Received response\n");
+    printf("Recived response\n");
     return 0;
 }
 
 int checkResponse(char *response, int expected)
 {
-    // TODO
+    int code = atoi(response);
+    if (code != expected)
+    {
+        printf("Error: expected code %d, received code %d\n", expected, code);
+        return -1;
+    }
+    return 0;
+
+   
+}
+
+int readWelcomeResponse(int socket, char *response){
+    int code;
+
+    char* welcomeResponse = (char*) malloc(100*sizeof(char));
+
+    do{
+        
+
+        int bytes = recv(socket, welcomeResponse, MAX_MSG, 0);
+
+        if (bytes < 0)
+        {
+            printf("Error reading response\n");
+            return -1;
+        }
+
+        code = getCodeResponse(socket, welcomeResponse);
+        printf("Response: %s\n", welcomeResponse);
+        printf("Response code: %d\n", code);
+
+    }
+    while (welcomeResponse[3] != ' ');
+
+    
+  
+
+    
+    return 0;
+}
+int getCodeResponse(int sockfd,char* response){
+  int responseCode;
+  responseCode = (int) response[0]-'0';
+  
+
+  return responseCode;
+}
+
+int sendCommand(int socketfd, char * command){
+  printf(" about to send command: \n> %s", command);
+  int sent = send(socketfd, command, strlen(command), 0);
+  if (sent == 0){
+    printf("sendCommand: Connection closed");
+    return 1;
+  }
+  if (sent == -1){
+    printf("sendCommand: error");
+    return 2;
+  }
+  printf("> command sent\n");
+  return 0;
 }
