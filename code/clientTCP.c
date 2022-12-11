@@ -28,11 +28,7 @@ int readResponse(int socket, char *response, int *code);
 
 int checkResponse(int code, int expected);
 
-int readWelcomeResponse(int socket, char *response);
 
-int getCodeResponse(int sockfd, char *response);
-
-int sendCommand(int socketfd, char *command);
 
 int main(int argc, char **argv)
 {
@@ -63,26 +59,17 @@ int main(int argc, char **argv)
     char passive_command[MAX_MSG] = "pasv\n";
     char response[MAX_RESPONSE];
 
-    /*printf("\nPrinting Commands...\n");
+    printf("\nPrinting Commands...\n");
     printf("user_command: %s\n", user_command);
     printf("pass_command: %s\n", pass_command);
     printf("file_command: %s\n", file_command);
     printf("passive_command: %s\n", passive_command);
-    printf("file_name: %s\n", file_name);
-    printf("file_path: %s\n", file_path);
-    printf("host: %s\n", host);*/
 
     /*Connect to the server*/
     getIP(host, server_addr);
 
     printf("\nConnecting to server...\n");
-    if (sockfd = connectToServer(server_addr, SERVER_PORT))
-    {
-        perror("connect()");
-        // exit(-1);
-    }
-
-    // Read welcome message
+    sockfd = connectToServer(server_addr, SERVER_PORT);
     readResponse(sockfd, response, &code);
     checkResponse(code, 220);
 
@@ -127,11 +114,8 @@ int main(int argc, char **argv)
     port = 256 * atoi(strtok(_port, "."));
     port = port + atoi(strtok(NULL, "."));
 
-    if (_sockfd = connectToServer(ip, port))
-    {
-        perror("connect()");
-        // exit(-1);
-    }
+    /* Connecting client */
+    _sockfd = connectToServer(ip, port);
 
     /*send retr command*/
     printf("Sending retr command\n");
@@ -141,7 +125,11 @@ int main(int argc, char **argv)
 
     saveFile(file_name, _sockfd);
     
-
+    if (close(_sockfd) < 0)
+    {
+        perror("close()");
+        exit(-1);
+    }
     if (close(sockfd) < 0)
     {
         perror("close()");
@@ -246,8 +234,6 @@ int saveFile(char *fileName, int socket)
 
 int writeCommand(int socket, char *command)
 {
-    printf("command to be sent: %s", command);
-
     int sent = send(socket, command, strlen(command), 0);
     if (sent < 0)
     {
@@ -256,14 +242,9 @@ int writeCommand(int socket, char *command)
     }
     else if (sent == 0)
     {
-        perror("????");
+        perror("sendCommand: error");
         exit(1);
     }
-    else
-    {
-        printf("Command sent!\n");
-    }
-    printf("send response:%d\n", sent);
     return 0;
 }
 
@@ -296,57 +277,5 @@ int checkResponse(int code, int expected)
         printf("Error: expected code %d, received code %d\n", expected, code);
         return -1;
     }
-    return 0;
-}
-
-int readWelcomeResponse(int socket, char *response)
-{
-    int code;
-
-    char *welcomeResponse = (char *)malloc(1000 * sizeof(char));
-
-    do
-    {
-
-        int bytes = recv(socket, welcomeResponse, 1000, 0);
-
-        if (bytes < 0)
-        {
-            printf("Error reading response\n");
-            return -1;
-        }
-
-        code = getCodeResponse(socket, welcomeResponse);
-        printf("Response: %s\n", welcomeResponse);
-        printf("Response code: %d\n", code);
-
-    } while (welcomeResponse[3] != ' ');
-
-    return 0;
-}
-
-int getCodeResponse(int sockfd, char *response)
-{
-    int responseCode;
-    responseCode = (int)response[0] - '0';
-
-    return responseCode;
-}
-
-int sendCommand(int socketfd, char *command)
-{
-    printf(" about to send command: \n> %s", command);
-    int sent = send(socketfd, command, strlen(command), 0);
-    if (sent == 0)
-    {
-        printf("sendCommand: Connection closed");
-        return 1;
-    }
-    if (sent == -1)
-    {
-        printf("sendCommand: error");
-        return 2;
-    }
-    printf("> command sent\n");
     return 0;
 }
