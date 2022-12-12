@@ -76,6 +76,8 @@ Configurar um router
 	Conectar routerboard rc1 (eth1) à rede do netlab (PX.1)
 	Desligar console e ligá-lo ao RouterMTIK
 	
+	Reset ao router
+	
 	Configurar ip do router
 		Restart ao gtkterm
 		/ip address add address=172.16.2.X9/24 interface=ether1
@@ -106,6 +108,12 @@ Configurar um router
 			/ip route add dst-address=0.0.0.0/0 gateway=172.16.2.254 (ONLY FOR LAB I320)
 			/ip route add dst-address=172.16.X0.0/24 gateway=172.16.X1.253
 			/ip route print
+			
+	Nas máquinas 2, 3 e 4 (DNS)
+	Open the resolv.com file
+		sudo nano /etc/resolv.conf
+	Add the server
+		nameserver 172.16.2.1
 	
 	Na máquina 3 ping a tudo
 		ping 172.16.X0.254
@@ -115,4 +123,5 @@ Configurar um router
 		ping 172.16.2.X9
 		ping 8.8.8.8
 	
+ftp://rcom:rcom@netlab1.fe.up.pt/files/crab.mp4
 		
