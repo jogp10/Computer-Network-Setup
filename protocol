@@ -124,4 +124,5 @@ Configurar um router
 		ping 8.8.8.8
 	
 ftp://rcom:rcom@netlab1.fe.up.pt/files/crab.mp4
+ftp://netlab1.fe.up.pt/pub.txt
 		
