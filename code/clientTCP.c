@@ -123,7 +123,10 @@ int main(int argc, char **argv)
     readResponse(sockfd, response, &code);
     checkResponse(code, 150);
 
+    printf("Writing file\n");
     saveFile(file_name, _sockfd);
+    readResponse(sockfd, response, &code);
+    checkResponse(code, 226);
     
     if (close(_sockfd) < 0)
     {
